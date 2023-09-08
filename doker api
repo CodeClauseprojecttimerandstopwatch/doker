@@ -1,0 +1,50 @@
+import requests
+
+def convert_currency(amount, from_currency, to_currency):
+    api_key = "YOUR_API_KEY"  # Replace with your API key
+    base_url = f"https://openexchangerates.org/api/latest.json?app_id={api_key}"
+
+    response = requests.get(base_url)
+    data = response.json()
+
+    if from_currency != "USD":
+        amount = amount / data['rates'][from_currency]
+
+    converted_amount = round(amount * data['rates'][to_currency], 2)
+
+    return converted_amount
+
+
+      
+from flask import Flask, request, jsonify
+from app.currency_converter import convert_currency
+
+app = Flask(__name__)
+
+@app.route('/convert', methods=['POST'])
+def convert():
+    data = request.get_json()
+    amount = data.get('amount')
+    from_currency = data.get('from_currency')
+    to_currency = data.get('to_currency')
+
+    if not amount or not from_currency or not to_currency:
+        return jsonify({"error": "Missing data"}), 400
+
+    converted_amount = convert_currency(amount, from_currency, to_currency)
+
+    response_data = {
+        "amount": amount,
+        "from_currency": from_currency,
+        "to_currency": to_currency,
+        "converted_amount": converted_amount
+    }
+
+    return jsonify(response_data)
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')
+
+
+
+      
